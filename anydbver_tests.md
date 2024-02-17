@@ -1,14 +1,18 @@
 Anydbver: https://github.com/ihanick/anydbver
 
+Test examples for PosgreSQL setup using **Anydbver**
 
-# Postgresql single node example:
-
+# Postgresql single node:
+```
 ./anydbver deploy os:el7 pg:15.5
 ./anydbver deploy os:el8 pg:14
 ./anydbver deploy os:el7 ppg:13.5
 ./anydbver deploy os:el8 ppg:13.5
+./anydbver deploy node0 pg:latest
+```
 
 ### Example:
+```
 ./anydbver deploy node0 pg:latest
 
 2024-02-04 12:06:31,274 INFO Found node lalit-default with ip 172.26.0.2
@@ -82,10 +86,10 @@ drwx------ 2 postgres postgres  4096 Feb  4 06:38 pg_xact
 -rw------- 1 postgres postgres    58 Feb  4 06:38 postmaster.opts
 -rw------- 1 postgres postgres    95 Feb  4 06:38 postmaster.pid
 
-
+```
 
 # Streaming Replication 
-
+```
 $ time ./anydbver deploy node0 pg:latest,wal=logical node1 pg:latest,primary=node0,wal=logical
 
 PLAY RECAP ***********************************************************************************************************************************************************
@@ -201,7 +205,6 @@ primary_conninfo = 'user=postgres password=''verysecretpassword1^'' channel_bind
 primary_slot_name = 'slot_2887450627'
 
 
-
 $ ./anydbver ssh default
 Last login: Sun Feb  4 07:08:09 2024 from 172.27.0.1
 [root@default ~]# psql
@@ -232,7 +235,7 @@ replay_lag       |
 sync_priority    | 0
 sync_state       | async
 reply_time       | 2024-02-04 07:16:39.363046+00
-
+```
 
 
 # Logical replication  [TODO not yet implemented]
@@ -240,14 +243,13 @@ reply_time       | 2024-02-04 07:16:39.363046+00
 
 
 # Patroni cluster
-
+```
 $ ./anydbver deploy pg patroni node1 pg:master=node0 patroni:master=node0 node2 pg:master=node0 patroni:master=node0
 
 PLAY RECAP ***********************************************************************************************************************************************************
 lalit.default              : ok=35   changed=22   unreachable=0    failed=0    skipped=58   rescued=0    ignored=0   
 lalit.node1                : ok=36   changed=23   unreachable=0    failed=0    skipped=57   rescued=0    ignored=0   
 lalit.node2                : ok=36   changed=23   unreachable=0    failed=0    skipped=57   rescued=0    ignored=0  
-
 
 
 $ ./anydbver ssh node1
@@ -325,4 +327,49 @@ Are you sure you want to switchover cluster stampede, demoting current leader cl
 | cluster13371-2  | 192.168.16.4 | Replica | streaming |  2 |         0 |
 +-----------------+--------------+---------+-----------+----+-----------+
 [postgres@node1 ~]$ 
+```
 
+# Kubernetes Operator 
+```
+$ ./anydbver deploy k3d:latest k8s-pg:2.2.0
+
+$ docker ps
+CONTAINER ID   IMAGE                            COMMAND                  CREATED        STATUS        PORTS                                       NAMES
+c32f39992d77   ghcr.io/k3d-io/k3d-proxy:5.4.9   "/bin/sh -c nginx-pr…"   46 hours ago   Up 46 hours   80/tcp, 0.0.0.0:39453->6443/tcp             k3d-lalit-cluster1-serverlb
+9dfc59b456f7   rancher/k3s:latest               "/bin/k3s agent"         46 hours ago   Up 46 hours                                               k3d-lalit-cluster1-agent-1
+9caeb16a9c33   rancher/k3s:latest               "/bin/k3s agent"         46 hours ago   Up 46 hours                                               k3d-lalit-cluster1-agent-0
+ac541532aa30   rancher/k3s:latest               "/bin/k3s server --c…"   46 hours ago   Up 46 hours                                               k3d-lalit-cluster1-server-0
+
+$ kubectl get pods -n pgo
+NAME                                           READY   STATUS      RESTARTS   AGE
+percona-postgresql-operator-657f794b5b-z9rcb   1/1     Running     0          45h
+cluster1-pgbouncer-847fdc6487-f4qv8            2/2     Running     0          45h
+cluster1-pgbouncer-847fdc6487-kh5lw            2/2     Running     0          45h
+cluster1-pgbouncer-847fdc6487-z5fwz            2/2     Running     0          45h
+cluster1-repo-host-0                           2/2     Running     0          45h
+cluster1-backup-c6nc-tg68w                     0/1     Completed   0          45h
+cluster1-instance1-qv9z-0                      4/4     Running     0          45h
+cluster1-instance1-6hxd-0                      4/4     Running     0          45h
+cluster1-instance1-zjdq-0                      4/4     Running     0          45h
+
+$ kubectl -n pgo exec -it cluster1-instance1-qv9z-0 -- /bin/bash 
+Defaulted container "database" out of: database, replication-cert-copy, pgbackrest, pgbackrest-config, postgres-startup (init), nss-wrapper-init (init)
+bash-4.4$ patronictl list
++ Cluster: cluster1-ha -----+-----------------------------------------+---------+---------+----+-----------+
+| Member                    | Host                                    | Role    | State   | TL | Lag in MB |
++---------------------------+-----------------------------------------+---------+---------+----+-----------+
+| cluster1-instance1-6hxd-0 | cluster1-instance1-6hxd-0.cluster1-pods | Replica | running |  1 |         0 |
+| cluster1-instance1-qv9z-0 | cluster1-instance1-qv9z-0.cluster1-pods | Leader  | running |  1 |           |
+| cluster1-instance1-zjdq-0 | cluster1-instance1-zjdq-0.cluster1-pods | Replica | running |  1 |         0 |
++---------------------------+-----------------------------------------+---------+---------+----+-----------+
+bash-4.4$ 
+
+$ kubectl get services -n pgo
+NAME                 TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+cluster1-pods        ClusterIP   None            <none>        <none>     46h
+cluster1-ha          ClusterIP   10.43.175.67    <none>        5432/TCP   46h
+cluster1-primary     ClusterIP   None            <none>        5432/TCP   46h
+cluster1-replicas    ClusterIP   10.43.1.134     <none>        5432/TCP   46h
+cluster1-ha-config   ClusterIP   None            <none>        <none>     46h
+cluster1-pgbouncer   ClusterIP   10.43.226.211   <none>        5432/TCP   46h
+```
