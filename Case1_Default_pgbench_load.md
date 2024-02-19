@@ -1,7 +1,6 @@
-Case: 
-Default PostgreSQL configuration + pgbenach load
+## Case:  Default PostgreSQL configuration + pgbenach load
 
-
+```
 [postgres@default ~]$ pgbench -i -s 50 pgtest
 dropping old tables...
 NOTICE:  table "pgbench_accounts" does not exist, skipping
@@ -30,11 +29,12 @@ initial connection time = 10.015 ms
 tps = 1027.057237 (without initial connection time)
 
 
-# While pgbench was running , collected pg_gather data. (pgtest database)
+# While pgbench was running, collected pg_gather data. (pgtest database)
 [postgres@default pg_gather]$ psql -d pgtest -X -f gather.sql > out.tsv
 [postgres@default pg_gather]$ psql -f gather_schema.sql -f out.tsv
 [postgres@default pg_gather]$ psql -X -f gather_report.sql > Case1_default_pgbench_GatherReport.html
 
+```
 
 
-
+HTML report: https://github.com/lalitvc/pg_conf_2024_talk_ref/blob/main/Case1_default_pgbench_GatherReport.html
