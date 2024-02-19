@@ -244,6 +244,10 @@ reply_time       | 2024-02-04 07:16:39.363046+00
 
 # Patroni cluster
 ```
+## For a specific version
+$ ./anydbver deploy pg:14 patroni node1 pg:14,master=node0 patroni:master=node0 node2 pg:14,master=node0 patroni:master=node0 
+
+## Default latest version
 $ ./anydbver deploy pg patroni node1 pg:master=node0 patroni:master=node0 node2 pg:master=node0 patroni:master=node0
 
 PLAY RECAP ***********************************************************************************************************************************************************
