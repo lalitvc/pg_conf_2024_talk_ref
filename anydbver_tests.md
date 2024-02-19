@@ -244,10 +244,29 @@ reply_time       | 2024-02-04 07:16:39.363046+00
 
 # Patroni cluster
 ```
-## For a specific version
-$ ./anydbver deploy pg:14 patroni node1 pg:14,master=node0 patroni:master=node0 node2 pg:14,master=node0 patroni:master=node0 
+**## For a specific version**
+$ ./anydbver deploy pg:14 patroni node1 pg:14,master=node0 patroni:master=node0 node2 pg:14,master=node0 patroni:master=node0
 
-## Default latest version
+[root@default /]# sudo su - postgres
+[postgres@default ~]$ psql
+psql (14.10)
+Type "help" for help.
+
+postgres=# exit
+
+[postgres@default ~]$ patronictl -c /etc/patroni/cluster1-0.yml list
++ Cluster: stampede (7337190504671049380) -----------+----+-----------+-----------------+
+| Member          | Host       | Role    | State     | TL | Lag in MB | Pending restart |
++-----------------+------------+---------+-----------+----+-----------+-----------------+
+| cluster1-0      | 172.21.0.2 | Leader  | running   |  1 |           | *               |
+| cluster112510-1 | 172.21.0.3 | Replica | streaming |  1 |         0 |                 |
+| cluster16090-2  | 172.21.0.4 | Replica | streaming |  1 |         0 |                 |
++-----------------+------------+---------+-----------+----+-----------+-----------------+
+[postgres@default ~]$ 
+
+
+
+**## Default latest version**
 $ ./anydbver deploy pg patroni node1 pg:master=node0 patroni:master=node0 node2 pg:master=node0 patroni:master=node0
 
 PLAY RECAP ***********************************************************************************************************************************************************
