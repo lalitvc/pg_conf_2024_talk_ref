@@ -38,3 +38,6 @@ tps = 1027.057237 (without initial connection time)
 
 
 HTML report: https://github.com/lalitvc/pg_conf_2024_talk_ref/blob/main/Case1_default_pgbench_GatherReport.html
+
+![image](https://github.com/lalitvc/pg_conf_2024_talk_ref/assets/7221144/192eed11-8c2b-4c81-9384-2f8d7a057cd1)
+
