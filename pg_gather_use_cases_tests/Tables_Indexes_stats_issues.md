@@ -105,3 +105,7 @@ HTML Report: https://github.com/lalitvc/pg_conf_2024_talk_ref/blob/main/pg_gathe
 
 ![image](https://github.com/lalitvc/pg_conf_2024_talk_ref/assets/7221144/466c2d6b-815b-489a-8237-ac0344778ee9)
 
+
+## Possible Solutions:
+- Removing duplicate indexes to reduce overall data size and query performance on the table.
+- Tuning-autovacuum for tables causing frequent autovacuum: https://www.percona.com/blog/tuning-autovacuum-in-postgresql-and-autovacuum-internals/
