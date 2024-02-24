@@ -101,6 +101,7 @@ SQL script 2: <builtin: select only>
 [postgres@default ~]$ 
 
 ```
-HTML Report: 
+HTML Report: https://github.com/lalitvc/pg_conf_2024_talk_ref/blob/main/pg_gather_use_cases_tests/HTML_Reports/Tables_Indexes_stats_issues_GatherReport.html
+
 ![image](https://github.com/lalitvc/pg_conf_2024_talk_ref/assets/7221144/466c2d6b-815b-489a-8237-ac0344778ee9)
 
