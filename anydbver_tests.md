@@ -396,3 +396,77 @@ cluster1-replicas    ClusterIP   10.43.1.134     <none>        5432/TCP   46h
 cluster1-ha-config   ClusterIP   None            <none>        <none>     46h
 cluster1-pgbouncer   ClusterIP   10.43.226.211   <none>        5432/TCP   46h
 ```
+
+#  Use of --namespace to have multiple setups
+
+```
+lalit@lalit-lp:~/git/anydbver$ ./anydbver --namespace pgrep_setup  deploy pg:15,docker-image
+Loaded settings:  {'PROVIDER': 'docker', 'LXD_PROFILE': ''}
+Loaded settings:  {'PROVIDER': 'docker', 'LXD_PROFILE': ''}
+2024-02-27 10:50:28,336 INFO Removing nodes
+2024-02-27 10:50:28,336 INFO  tools/k3d cluster delete pgrep_setup-lalit-cluster1
+INFO[0000] No clusters found                            
+2024-02-27 10:50:28,371 INFO docker ps -a --filter network=pgrep_setup-lalit-anydbver --format {{.ID}}
+2024-02-27 10:50:28,404 INFO  docker network rm pgrep_setup-lalit-anydbver
+Error: No such network: pgrep_setup-lalit-anydbver
+2024-02-27 10:50:28,435 INFO  docker run -i --rm -v /home/lalit/git/anydbver/data:/data busybox sh -c "rm -rf -- /data/nfs"
+2024-02-27 10:50:29,018 INFO rm -f pgrep_setup-ssh_config pgrep_setup-ansible_hosts; ./docker_container.py --provider=docker --namespace=pgrep_setup --nodes=1 --skip-nodes=node0,default --priv-nodes= --os=rocky8,node0=rocky8, --destroy --deploy
+Loaded settings:  {'PROVIDER': 'docker', 'LXD_PROFILE': ''}
+2024-02-27 10:50:29,043 INFO docker rm -f pgrep_setup-default
+2024-02-27 10:50:29,083 INFO  docker network create pgrep_setup-lalit-anydbver
+bf2ca3110773f47ba7d8a020d6781fe4181cab721479a8c93ad1bc14010131f2
+2024-02-27 10:50:29,150 INFO Deploying node with unmodified docker image
+2024-02-27 10:50:29,151 INFO  docker run -d --name=pgrep_setup-lalit-default -e POSTGRES_PASSWORD=verysecretpassword1^ --network=pgrep_setup-lalit-anydbver --entrypoint=/bin/sh postgres:15 -c "#!/bin/sh
+if ! grep -q \"host replication postgres\" /docker-entrypoint-initdb.d/00-init.sh ; then
+	cat >> /docker-entrypoint-initdb.d/00-init.sh <<EOF
+echo \"host replication postgres all scram-sha-256\" >> \"$PGDATA\"/pg_hba.conf
+EOF
+chmod +x /docker-entrypoint-initdb.d/00-init.sh
+fi
+
+docker-entrypoint.sh postgres
+"
+11e71fdf9dcd65a40fca4704ef71174b6c66b4f8d329d1a3bbff45f9554c9e47
+2024-02-27 10:50:29,578 INFO Setting up node pgrep_setup-lalit-default with unmodified docker image
+2024-02-27 10:50:29,578 INFO Deploy
+2024-02-27 10:50:29,578 INFO  ansible-playbook -i pgrep_setup-ansible_hosts_run --forks 16 playbook.yml
+[WARNING]: provided hosts list is empty, only localhost is available. Note that the implicit localhost does not match 'all'
+
+PLAY [install percona server] ****************************************************************************************************************************************
+skipping: no hosts matched
+
+PLAY RECAP ***********************************************************************************************************************************************************
+
+
+$ docker ps
+CONTAINER ID   IMAGE                             COMMAND                  CREATED              STATUS              PORTS      NAMES
+11e71fdf9dcd   postgres:15                       "/bin/sh -c '#!/bin/…"   About a minute ago   Up About a minute   5432/tcp   pgrep_setup-lalit-default
+020840fd1964   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago           Up 2 days           22/tcp     lalit-node2
+f452669e45a2   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago           Up 2 days           22/tcp     lalit-node1
+e0d764b428b7   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago           Up 2 days           22/tcp     lalit-default
+lalit@lalit-lp:~/git/anydbver$
+```
+
+**Destroy/Delete particular namespace setup:**
+```
+$ ./anydbver --namespace pgrep_setup destroy
+Loaded settings:  {'PROVIDER': 'docker', 'LXD_PROFILE': ''}
+Loaded settings:  {'PROVIDER': 'docker', 'LXD_PROFILE': ''}
+2024-02-27 10:57:23,058 INFO Removing nodes
+2024-02-27 10:57:23,058 INFO  tools/k3d cluster delete pgrep_setup-lalit-cluster1
+INFO[0000] No clusters found                            
+2024-02-27 10:57:23,072 INFO docker ps -a --filter network=pgrep_setup-lalit-anydbver --format {{.ID}}
+2024-02-27 10:57:23,105 INFO  docker rm -f 11e71fdf9dcd
+11e71fdf9dcd
+2024-02-27 10:57:23,468 INFO  docker network rm pgrep_setup-lalit-anydbver
+pgrep_setup-lalit-anydbver
+2024-02-27 10:57:23,634 INFO  docker run -i --rm -v /home/lalit/git/anydbver/data:/data busybox sh -c "rm -rf -- /data/nfs"
+
+$ docker ps
+CONTAINER ID   IMAGE                             COMMAND                  CREATED      STATUS      PORTS     NAMES
+020840fd1964   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago   Up 2 days   22/tcp    lalit-node2
+f452669e45a2   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago   Up 2 days   22/tcp    lalit-node1
+e0d764b428b7   rockylinux:8-sshd-systemd-lalit   "/usr/lib/systemd/sy…"   2 days ago   Up 2 days   22/tcp    lalit-default
+
+```
+
